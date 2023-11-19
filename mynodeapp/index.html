@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Connected Clients Count</title>
+ <style>
+   table {
+     width: 100%;
+     border-collapse: collapse;
+     margin-top: 20px;
+   }
+
+   th, td {
+     border: 1px solid #ddd;
+     padding: 8px;
+     text-align: left;
+   }
+
+   th {
+     background-color: #f2f2f2;
+   }
+ </style>
+</head>
+<body>
+ <h1>Connected Clients: <span id="connectedClients">0</span></h1>
+ <div>
+   <input type="text" id="messageInput" placeholder="Type your message...">
+   <input type="checkbox" id="enableChat"> Enable Chat
+   <button onclick="sendMessage()">Send</button>
+ </div>
+ <table id="chatTable">
+   <thead>
+     <tr>
+       <th>User</th>
+       <th>Message</th>
+     </tr>
+   </thead>
+   <tbody></tbody>
+ </table>
+
+ <script src="https://cdn.socket.io/4.1.2/socket.io.min.js"></script>
+ <script>
+   const socket = io();
+   const messageInput = document.getElementById('messageInput');
+   const chatTableBody = document.querySelector('#chatTable tbody');
+   const enableChatCheckbox = document.getElementById('enableChat');
+
+   socket.on('updateConnectedClients', (clients) => {
+     document.getElementById('connectedClients').innerText = Object.keys(clients).length;
+   });
+
+   socket.on('updateChat', (chatData) => {
+     updateChatTable(chatData);
+   });
+
+   function sendMessage() {
+     const message = messageInput.value;
+     const chatEnabled = enableChatCheckbox.checked;
+
+     if (message.trim() !== '' && chatEnabled) {
+       socket.emit('sendMessage', message);
+       messageInput.value = '';
+     }
+   }
+
+   function updateChatTable(chatData) {
+     chatTableBody.innerHTML = '';
+
+     chatData.forEach((entry) => {
+       const row = document.createElement('tr');
+       const userNameCell = document.createElement('td');
+       const messageCell = document.createElement('td');
+
+       userNameCell.textContent = entry.userName;
+       messageCell.textContent = entry.message;
+
+       row.appendChild(userNameCell);
+       row.appendChild(messageCell);
+       chatTableBody.appendChild(row);
+     });
+   }
+ </script>
+</body>
+</html>
